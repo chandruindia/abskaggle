@@ -132,6 +132,8 @@ Solution: Change port in app.py (last line)
 ==========================================
 CONTACT
 ==========================================
+Email: chandru009@gmail.com  
+LinkedIn: [linkedin.com/chandruindia](https://www.linkedin.com/in/chandruindia/)
 
 Project for Competition Submission
 Model: Google Gemma 4 (2B-IT) via Hugging Face

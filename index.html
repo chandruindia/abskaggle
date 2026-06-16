@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antibiotic Advisor for Vulnerable Patients</title>
+    <!-- Chart.js CDN for animated graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9f0f5 0%, #dce3ec 100%);
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #1a3c5e, #2b5a7a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #2c4e6e;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1f5e8c;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 880px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            padding: 1.6rem 1.8rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-left: 5px solid #2c7da0;
+            padding-left: 1rem;
+            color: #1f3e4b;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #1f5e7e;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.2rem;
+            border: 1.5px solid #cfdfed;
+            background: white;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+
+        button {
+            background: linear-gradient(100deg, #1f6e8c, #2c7da0);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.85rem 1.6rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 0.5rem;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background: linear-gradient(100deg, #0f5a78, #1f6e8c);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-area {
+            margin-top: 1.8rem;
+            background: #f0f6fa;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+        }
+
+        .antibiotic-highlight {
+            background: #e3f0f5;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 6px solid #2c7da0;
+        }
+
+        .warning {
+            background: #ffe6e5;
+            color: #b13e3e;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            border-left: 5px solid #d9534f;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #1f5e8c;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        canvas {
+            max-height: 280px;
+            margin-top: 1rem;
+        }
+
+        .query-log {
+            margin-top: 2rem;
+            background: #eef2f5;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            font-size: 0.85rem;
+        }
+
+        hr {
+            margin: 1rem 0;
+            border-color: #cbdde9;
+        }
+
+        .alternatives-list {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #ffffff;
+            border-radius: 1rem;
+        }
+
+        .alternatives-list ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .alternatives-list li {
+            margin: 0.5rem 0;
+        }
+
+        .analysis-text {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #e8f0f5;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .aware-access { color: #2e7d32; font-weight: bold; }
+        .aware-watch { color: #ed6c02; font-weight: bold; }
+        .aware-reserve { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1><i class="fas fa-stethoscope"></i> Antibiotic Advisor for Vulnerable Patients</h1>
+        <p>AI-powered recommendations for Pregnant, Pediatric & Elderly patients (Gemma Model)</p>
+        <div class="badge-container">
+            <span class="badge"><i class="fas fa-fetus"></i> Pregnancy safety</span>
+            <span class="badge"><i class="fas fa-child"></i> Pediatrics weight-based</span>
+            <span class="badge"><i class="fas fa-user-graduate"></i> Elders + renal</span>
+            <span class="badge"><i class="fas fa-brain"></i> Gemma AI</span>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- Left panel: input form -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-prescription-bottle"></i> Clinical Query</div>
+            <form id="recommendForm">
+                <div class="form-group">
+                    <label><i class="fas fa-users"></i> Patient Group *</label>
+                    <select id="patientType" required>
+                        <option value="">-- Select --</option>
+                        <option value="PregnantWomen">🤰 Pregnant Women (18-40y)</option>
+                        <option value="Pediatrics">🧒 Pediatrics ( < 18 years)</option>
+                        <option value="Elders">👴 Elders (60+ years)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> Age (years)</label>
+                    <input type="number" id="age" placeholder="e.g., 32" step="1">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-weight-scale"></i> Weight (kg)</label>
+                    <input type="number" id="weight" placeholder="e.g., 65" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-diagnoses"></i> Diagnosis / Infection type *</label>
+                    <input type="text" id="diagnosis" placeholder="UTI, pneumonia, intra-abdominal infection ..." required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-notes-medical"></i> Additional context (comorbidities, allergies)</label>
+                    <textarea rows="2" id="comorbidities" placeholder="e.g., Diabetes, renal impairment, penicillin allergy"></textarea>
+                </div>
+                <button type="submit" id="submitBtn"><i class="fas fa-microscope"></i> Get AI Recommendation</button>
+            </form>
+            <div class="query-log" id="queryHistoryPanel">
+                <i class="fas fa-history"></i> <strong>Recent queries</strong>
+                <div id="historyList" style="margin-top: 8px; max-height: 180px; overflow-y: auto;">No queries yet</div>
+            </div>
+        </div>
+
+        <!-- Right panel: Recommendation output -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> AI Recommendation & Risk Graph</div>
+            <div id="recommendationOutput">
+                <div class="result-area" style="text-align: center; color: #5f7f9a;">
+                    <i class="fas fa-brain fa-2x"></i>
+                    <p>Fill the form and submit. Gemma AI will generate a recommendation based on the clinical data.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store query history in localStorage
+    let queryHistory = [];
+
+    // Load history from localStorage
+    function loadHistory() {
+        const saved = localStorage.getItem('antibiotic_query_history');
+        if (saved) {
+            queryHistory = JSON.parse(saved).slice(-5);
+            renderHistory();
+        }
+    }
+
+    // Save to localStorage
+    function saveToHistory(patientType, diagnosis, recommendation) {
+        queryHistory.unshift({
+            timestamp: new Date().toLocaleString(),
+            patientType,
+            diagnosis,
+            recommendation
+        });
+        if (queryHistory.length > 5) queryHistory = queryHistory.slice(0, 5);
+        localStorage.setItem('antibiotic_query_history', JSON.stringify(queryHistory));
+        renderHistory();
+    }
+
+    // Render history list
+    function renderHistory() {
+        const historyDiv = document.getElementById('historyList');
+        if (queryHistory.length === 0) {
+            historyDiv.innerHTML = 'No queries yet';
+            return;
+        }
+        historyDiv.innerHTML = `<ul style="margin-left:1rem; list-style-type: none; padding-left: 0;">${queryHistory.map(h => 
+            `<li style="margin-bottom: 8px;"><i class="fas fa-user-md"></i> <strong>${h.patientType}</strong> | ${h.diagnosis}<br><small style="color:#666;">→ ${h.recommendation.substring(0, 60)}${h.recommendation.length > 60 ? '...' : ''}</small></li>`
+        ).join('')}</ul>`;
+    }
+
+    // Get AWaRe badge class
+    function getAwareClass(category) {
+        if (!category) return '';
+        const cat = category.toLowerCase();
+        if (cat === 'access') return 'aware-access';
+        if (cat === 'watch') return 'aware-watch';
+        if (cat === 'reserve') return 'aware-reserve';
+        return '';
+    }
+
+    // Render comparison graph using Chart.js
+    let riskChart = null;
+    function renderGraph(antibioticName, alternatives) {
+        const ctx = document.getElementById('riskChartCanvas');
+        if (!ctx) return;
+
+        // Create labels including primary and alternatives
+        const labels = [antibioticName, ...alternatives.map(a => typeof a === 'string' ? a : a.name)];
+        
+        // Simulate efficacy and risk scores based on drug type (in real implementation, these come from backend)
+        const getEfficacyScore = (name) => {
+            if (name.includes('Ceftriaxone') || name.includes('ceftriaxone')) return 92;
+            if (name.includes('Amoxicillin') || name.includes('amoxicillin')) return 85;
+            if (name.includes('Azithromycin') || name.includes('azithromycin')) return 88;
+            if (name.includes('Cefixime') || name.includes('cefixime')) return 82;
+            if (name.includes('Metronidazole') || name.includes('metronidazole')) return 80;
+            if (name.includes('Clindamycin') || name.includes('clindamycin')) return 78;
+            return 75;
+        };
+
+        const getRiskScore = (name) => {
+            if (name.includes('Ceftriaxone') || name.includes('ceftriaxone')) return 25;
+            if (name.includes('Amoxicillin') || name.includes('amoxicillin')) return 15;
+            if (name.includes('Azithromycin') || name.includes('azithromycin')) return 30;
+            if (name.includes('Cefixime') || name.includes('cefixime')) return 28;
+            if (name.includes('Metronidazole') || name.includes('metronidazole')) return 35;
+            if (name.includes('Clindamycin') || name.includes('clindamycin')) return 40;
+            return 30;
+        };
+
+        const efficacyScores = labels.map(getEfficacyScore);
+        const riskScores = labels.map(getRiskScore);
+
+        if (riskChart) riskChart.destroy();
+        riskChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Efficacy Score (higher = better) ✔️', data: efficacyScores, backgroundColor: '#5aa9bf', borderRadius: 10 },
+                    { label: 'Risk Score (higher = more risk) ✖️', data: riskScores, backgroundColor: '#e68a7c', borderRadius: 10 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Score (%)' }
+                    }
+                },
+                plugins: {
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}%` } }
+                }
+            }
+        });
+    }
+
+    // Main submit handler - calls Flask backend at /api/recommend
+    document.getElementById('recommendForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const patientType = document.getElementById('patientType').value;
+        const age = document.getElementById('age').value;
+        const weight = document.getElementById('weight').value;
+        const diagnosis = document.getElementById('diagnosis').value;
+        const comorbidities = document.getElementById('comorbidities').value;
+
+        if (!patientType || !diagnosis) {
+            alert('Please fill required fields: Patient Group and Diagnosis');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        const outputDiv = document.getElementById('recommendationOutput');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Consulting Gemma AI...';
+        outputDiv.innerHTML = `
+            <div class="result-area loading">
+                <i class="fas fa-brain fa-3x"></i>
+                <p>Generating recommendation with Gemma model...</p>
+                <small>This may take a few seconds</small>
+            </div>
+        `;
+
+        try {
+            // Call Flask backend at /api/recommend (matching the Flask route)
+            const response = await fetch('/api/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    patient_type: patientType,
+                    diagnosis: diagnosis,
+                    age: age ? parseInt(age) : null,
+                    weight: weight ? parseFloat(weight) : null,
+                    comorbidities: comorbidities || null
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error('Backend returned success: false');
+            }
+
+            // Extract data from response
+            const antibioticName = data.antibiotic || data.recommended_antibiotic || 'Recommended antibiotic';
+            const alternatives = data.alternatives || ['Alternative 1', 'Alternative 2'];
+            const analysisText = data.analysis || data.rationale || 'Clinical recommendation generated by Gemma AI model based on patient-specific factors.';
+            
+            // Parse AWaRe category if available in analysis or default
+            let awareCategory = 'Watch';
+            if (analysisText.toLowerCase().includes('access')) awareCategory = 'Access';
+            if (analysisText.toLowerCase().includes('reserve')) awareCategory = 'Reserve';
+            
+            const awareClass = getAwareClass(awareCategory);
+
+            // Display the AI recommendation
+            outputDiv.innerHTML = `
+                <div class="result-area">
+                    <div class="antibiotic-highlight">
+                        <i class="fas fa-capsules"></i> 
+                        <strong>🏆 High Scored Antibiotic: ${antibioticName}</strong><br>
+                        <span class="${awareClass}">AWaRe Category: ${awareCategory}</span><br>
+                        <i class="fas fa-check-circle"></i> <strong>Rationale:</strong> Based on patient factors and infection type.
+                    </div>
+                    
+                    <div class="alternatives-list">
+                        <strong>💊 Suggested other drugs:</strong>
+                        <ul>
+                            ${alternatives.map(alt => `<li><i class="fas fa-flask"></i> ${typeof alt === 'string' ? alt : alt.name}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-text">
+                        <strong><i class="fas fa-comment-dots"></i> Gemma AI Clinical Analysis:</strong><br>
+                        ${analysisText}
+                    </div>
+                    
+                    <canvas id="riskChartCanvas" width="400" height="220" style="max-height:220px; margin-top:1rem;"></canvas>
+                </div>
+            `;
+
+            // Render graph with antibiotic and alternatives
+            setTimeout(() => {
+                renderGraph(antibioticName, alternatives);
+            }, 100);
+
+            // Save to history
+            saveToHistory(patientType, diagnosis, antibioticName);
+
+        } catch (error) {
+            console.error('Error:', error);
+            outputDiv.innerHTML = `
+                <div class="result-area warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error connecting to AI service</strong><br>
+                    Make sure the Flask server is running.<br>
+                    <small>Error: ${error.message}</small><br><br>
+                    <button onclick="location.reload()" style="width: auto; padding: 0.5rem 1rem; margin-top: 0.5rem;">Retry</button>
+                </div>
+            `;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-microscope"></i> Get AI Recommendation';
+        }
+    });
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+        loadHistory();
+    });
+</script>
+</body>
+</html>

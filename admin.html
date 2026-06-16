@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Unresolved Antibiotic Queries</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            background: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .unresolved-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .query-card {
+            border-left: 4px solid #ff6b6b;
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .query-card.unresolved {
+            border-left-color: #ff6b6b;
+            background: #fff9f9;
+        }
+        
+        .query-card.resolved {
+            border-left-color: #51cf66;
+            background: #f0f9f0;
+        }
+        
+        .query-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .query-id {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .query-date {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        .query-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-size: 1em;
+        }
+        
+        .resolution-form {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .resolution-form textarea, .resolution-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        
+        .btn-resolve {
+            background: #51cf66;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-resolve:hover {
+            background: #40c057;
+        }
+        
+        .filter-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-bar input, .filter-bar select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            flex: 1;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .status-unresolved {
+            background: #ffe0e0;
+            color: #ff6b6b;
+        }
+        
+        .status-resolved {
+            background: #d3f9d8;
+            color: #51cf66;
+        }
+        
+        .reason-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            background: #fff3e0;
+            color: #ff9800;
+            margin-left: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        
+        .export-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .export-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Antibiotic Stewardship Admin Panel</h1>
+            <p>Manage unresolved queries and update antibiotic recommendations</p>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUnresolved">0</div>
+                <div>Total Unresolved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="noResearchCount">0</div>
+                <div>No Research Available</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="noAntibioticCount">0</div>
+                <div>No Antibiotic Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalResolved">0</div>
+                <div>Total Resolved</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('unresolved')">⚠ Unresolved Queries</button>
+            <button class="tab" onclick="switchTab('resolved')">✓ Resolved Queries</button>
+            <button class="tab" onclick="switchTab('all')">📋 All Queries</button>
+        </div>
+        
+        <div class="unresolved-list">
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Search by diagnosis, patient type, or reason...">
+                <select id="filterReason">
+                    <option value="all">All Reasons</option>
+                    <option value="NO_RESEARCH_AVAILABLE">No Research Available</option>
+                    <option value="NO_SUITABLE_ANTIBIOTIC_FOUND">No Antibiotic Found</option>
+                </select>
+                <select id="filterPatientType">
+                    <option value="all">All Patient Types</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="PregnantWomen">Pregnant Women</option>
+                    <option value="Elders">Elders</option>
+                </select>
+                <button class="refresh-btn" onclick="loadUnresolvedQueries()">🔄 Refresh</button>
+                <button class="export-btn" onclick="exportToCSV()">📊 Export CSV</button>
+            </div>
+            <div id="queriesList">
+                <div class="loading">Loading queries...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let unresolvedQueries = [];
+        let resolvedQueries = [];
+        let currentTab = 'unresolved';
+        
+        async function loadUnresolvedQueries() {
+            try {
+                // Load unresolved queries
+                const unresolvedResponse = await fetch('/api/unresolved-queries?limit=100');
+                const unresolvedData = await unresolvedResponse.json();
+                
+                if (unresolvedData.success) {
+                    unresolvedQueries = unresolvedData.unresolved_queries || [];
+                    document.getElementById('totalUnresolved').textContent = unresolvedData.total_unresolved || 0;
+                    
+                    // Count by reason
+                    const noResearch = unresolvedQueries.filter(q => q.reason === 'NO_RESEARCH_AVAILABLE').length;
+                    const noAntibiotic = unresolvedQueries.filter(q => q.reason === 'NO_SUITABLE_ANTIBIOTIC_FOUND').length;
+                    document.getElementById('noResearchCount').textContent = noResearch;
+                    document.getElementById('noAntibioticCount').textContent = noAntibiotic;
+                }
+                
+                // Load resolved queries count from health endpoint
+                const healthResponse = await fetch('/api/health');
+                const healthData = await healthResponse.json();
+                document.getElementById('totalResolved').textContent = healthData.resolved_count || 0;
+                
+                filterAndDisplay();
+            } catch (error) {
+                console.error('Error loading queries:', error);
+                document.getElementById('queriesList').innerHTML = '<div class="empty-state">❌ Error loading queries. Please check if the server is running.</div>';
+            }
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            filterAndDisplay();
+        }
+        
+        function filterAndDisplay() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const reasonFilter = document.getElementById('filterReason').value;
+            const patientTypeFilter = document.getElementById('filterPatientType').value;
+            
+            let filtered = [];
+            
+            if (currentTab === 'unresolved') {
+                filtered = [...unresolvedQueries];
+            } else if (currentTab === 'resolved') {
+                // For resolved, we only have count from health endpoint, not full data
+                // You can add a separate endpoint for resolved queries if needed
+                filtered = [];
+            } else {
+                filtered = [...unresolvedQueries];
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(q => 
+                    (q.diagnosis && q.diagnosis.toLowerCase().includes(searchTerm)) ||
+                    (q.patient_type && q.patient_type.toLowerCase().includes(searchTerm)) ||
+                    (q.reason && q.reason.toLowerCase().includes(searchTerm)) ||
+                    (q.comorbidities && q.comorbidities.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (reasonFilter !== 'all') {
+                filtered = filtered.filter(q => q.reason === reasonFilter);
+            }
+            
+            if (patientTypeFilter !== 'all') {
+                filtered = filtered.filter(q => q.patient_type === patientTypeFilter);
+            }
+            
+            displayQueries(filtered);
+        }
+        
+        function displayQueries(queries) {
+            const container = document.getElementById('queriesList');
+            
+            if (queries.length === 0) {
+                if (currentTab === 'unresolved') {
+                    container.innerHTML = '<div class="empty-state">✅ No unresolved queries! All good!</div>';
+                } else if (currentTab === 'resolved') {
+                    container.innerHTML = '<div class="empty-state">📊 Resolved queries will appear here once you resolve them</div>';
+                } else {
+                    container.innerHTML = '<div class="empty-state">No queries found</div>';
+                }
+                return;
+            }
+            
+            container.innerHTML = queries.map((query, index) => `
+                <div class="query-card unresolved" data-id="${query.id || index}">
+                    <div class="query-header">
+                        <div>
+                            <span class="query-id">🔍 Query #${index + 1}</span>
+                            <span class="reason-badge">${query.reason === 'NO_RESEARCH_AVAILABLE' ? '📚 No Research Available' : '💊 No Antibiotic Found'}</span>
+                        </div>
+                        <span class="query-date">${query.timestamp ? new Date(query.timestamp).toLocaleString() : new Date(query.saved_at).toLocaleString()}</span>
+                        <span class="status-badge status-unresolved">⚠ Unresolved</span>
+                    </div>
+                    <div class="query-details">
+                        <div class="detail-item">
+                            <div class="detail-label">👤 Patient Type</div>
+                            <div class="detail-value">${query.patient_type || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📊 Age / Weight</div>
+                            <div class="detail-value">${query.age || '?'} yrs / ${query.weight || '?'} kg</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">🩺 Diagnosis</div>
+                            <div class="detail-value"><strong>${query.diagnosis || 'Not specified'}</strong></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📋 Comorbidities</div>
+                            <div class="detail-value">${query.comorbidities || 'None reported'}</div>
+                        </div>
+                    </div>
+                    <div class="resolution-form">
+                        <textarea id="notes-${index}" placeholder="Resolution notes / clinical decision (required)..." rows="3"></textarea>
+                        <input type="text" id="antibiotic-${index}" placeholder="Recommended antibiotic (required)">
+                        <button class="btn-resolve" onclick="resolveQuery(${index}, '${query.diagnosis}', '${query.patient_type}')">✓ Mark as Resolved</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function resolveQuery(queryIndex, diagnosis, patientType) {
+            const notes = document.getElementById(`notes-${queryIndex}`).value;
+            const antibiotic = document.getElementById(`antibiotic-${queryIndex}`).value;
+            
+            if (!notes || !antibiotic) {
+                alert('⚠ Please provide both resolution notes and recommended antibiotic');
+                return;
+            }
+            
+            // Since we don't have a dedicated resolve endpoint, we'll log the resolution
+            // and remove the query from the unresolved list
+            const resolution = {
+                diagnosis: diagnosis,
+                patient_type: patientType,
+                resolution_notes: notes,
+                recommended_antibiotic: antibiotic,
+                resolved_at: new Date().toISOString()
+            };
+            
+            console.log('Resolution saved:', resolution);
+            
+            // Save to localStorage for persistence
+            let resolutions = JSON.parse(localStorage.getItem('resolved_queries') || '[]');
+            resolutions.push(resolution);
+            localStorage.setItem('resolved_queries', JSON.stringify(resolutions));
+            
+            // Remove from unresolved list
+            unresolvedQueries = unresolvedQueries.filter((_, idx) => idx !== queryIndex);
+            
+            // Update stats
+            document.getElementById('totalUnresolved').textContent = unresolvedQueries.length;
+            document.getElementById('totalResolved').textContent = parseInt(document.getElementById('totalResolved').textContent) + 1;
+            
+            alert(`✅ Query resolved!\n\nAntibiotic: ${antibiotic}\nNotes: ${notes}\n\nThis resolution has been logged.`);
+            
+            filterAndDisplay();
+        }
+        
+        function exportToCSV() {
+            if (unresolvedQueries.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Prepare CSV data
+            const headers = ['Timestamp', 'Patient Type', 'Diagnosis', 'Age', 'Weight', 'Comorbidities', 'Reason', 'Status'];
+            const rows = unresolvedQueries.map(query => [
+                query.timestamp || query.saved_at || '',
+                query.patient_type || '',
+                query.diagnosis || '',
+                query.age || '',
+                query.weight || '',
+                query.comorbidities || '',
+                query.reason || '',
+                'Unresolved'
+            ]);
+            
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `unresolved_queries_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('CSV exported successfully!');
+        }
+        
+        // Event listeners for filters
+        document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
+        document.getElementById('filterReason').addEventListener('change', filterAndDisplay);
+        document.getElementById('filterPatientType').addEventListener('change', filterAndDisplay);
+        
+        // Load unresolved queries on page load
+        loadUnresolvedQueries();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadUnresolvedQueries, 30000);
+    </script>
+</body>
+</html>
